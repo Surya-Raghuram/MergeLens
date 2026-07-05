@@ -1,0 +1,150 @@
+# ==========================================
+# Environment Variables
+# ==========================================
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+
+.venv/
+venv/
+env/
+ENV/
+
+.poetry/
+poetry.lock
+
+# UV
+.uv/
+uv.lock
+
+# ==========================================
+# Backend Build
+# ==========================================
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+
+# ==========================================
+# C++
+# ==========================================
+analyzer/build/
+analyzer/bin/
+analyzer/lib/
+
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+*.exe
+*.out
+
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+Makefile
+
+# ==========================================
+# Flutter / Dart
+# ==========================================
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/.metadata
+frontend/build/
+
+frontend/web/flutter_bootstrap.js
+frontend/web/flutter_service_worker.js
+frontend/web/main.dart.js
+
+# ==========================================
+# IDEs
+# ==========================================
+.vscode/
+.idea/
+
+*.iml
+
+# ==========================================
+# macOS
+# ==========================================
+.DS_Store
+
+# ==========================================
+# Windows
+# ==========================================
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# Linux
+# ==========================================
+*~
+
+# ==========================================
+# Logs
+# ==========================================
+*.log
+logs/
+log/
+
+# ==========================================
+# Docker
+# ==========================================
+docker-data/
+*.pid
+
+# ==========================================
+# Temporary Files
+# ==========================================
+tmp/
+temp/
+.cache/
+
+# ==========================================
+# Testing
+# ==========================================
+coverage/
+coverage.xml
+
+# ==========================================
+# Supabase
+# ==========================================
+supabase/.temp/
+supabase/.branches/
+
+# ==========================================
+# Secrets
+# ==========================================
+*.pem
+*.key
+*.crt
+*.p12
+
+# ==========================================
+# Misc
+# ==========================================
+*.swp
+*.swo
