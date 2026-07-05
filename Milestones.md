@@ -1,6 +1,6 @@
-[ ] **Milestone 1**: The Foundation. Setup Docker Compose, the backend scaffolding (FastAPI + Redis + Celery/Arq), and the Supabase connection.
+[x]  **Milestone 1**: The Foundation. Setup Docker Compose, the backend scaffolding (FastAPI + Redis + Celery/Arq), and the Supabase connection.
 
-[ ] **Milestone 2**: The GitHub Webhook & Pipeline. Create the GitHub App securely, write the webhook receiver, and implement the background worker pipeline.
+[ ]  **Milestone 2**: The GitHub Webhook & Pipeline. Create the GitHub App securely, write the webhook receiver, and implement the background worker pipeline.
 
 [ ] **Milestone 3**: The C++ Analyzer. Write the C++ tool using CMake, parse a simple code structure, output JSON, and write the Python wrapper to execute it.
 
