@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:7-alpine
@@ -13,8 +11,8 @@ services:
 
   api:
     build: 
-      context: .                          # <-- Changed to root
-      dockerfile: ./backend/Dockerfile    # <-- Point to the Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
@@ -23,24 +21,30 @@ services:
       - REDIS_PORT=6379
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - ./backend/app:/app/backend/app    # <-- Adjusted volume mapping
+      - ./backend/app:/app/backend/app
 
   worker:
     build: 
-      context: .                          # <-- Changed to root
-      dockerfile: ./backend/Dockerfile    # <-- Point to the Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile
     command: arq app.worker.tasks.WorkerSettings
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - ./backend/app:/app/backend/app    # <-- Adjusted volume mapping
+      - ./backend/app:/app/backend/app
