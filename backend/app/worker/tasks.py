@@ -4,6 +4,7 @@ from arq.connections import RedisSettings
 from app.core.config import settings
 from app.services.github_client import get_pull_request_files, publish_review_comments
 from app.analyzer.graph import review_brain
+from app.core.supabase_client import supabase
 
 async def process_pull_request(ctx: dict, pr_number: int, repo_name: str) -> str:
     """
@@ -58,6 +59,18 @@ async def process_pull_request(ctx: dict, pr_number: int, repo_name: str) -> str
                     )
                 else:
                     print(f"[PR #{pr_number}] Code looks good. No comments generated for {filename}.")
+
+                try:
+                    supabase.table("review_reports").insert({
+                        "repo_name": repo_name,
+                        "pr_number": pr_number,
+                        "status": "completed" if comments else "clean",
+                        "file_changes_summary": final_state.get("structural_intent", "No major structural changes."),
+                        "structural_comments": comments
+                    }).execute()
+                    print(f"[PR #{pr_number}] 💾 Saved report to Supabase.")
+                except Exception as db_err:
+                    print(f"[PR #{pr_number}] ⚠️ Failed to save to DB: {db_err}")
                     
         print(f"[PR #{pr_number}] ✅ Review complete.")
         return f"Successfully processed {repo_name} PR #{pr_number}"
