@@ -4,6 +4,7 @@ from arq import create_pool
 from arq.connections import RedisSettings
 from app.core.config import settings
 from app.core.supabase_client import supabase
+from app.api.webhooks import router as webhooks_router
 
 # Global reference to the Redis task pool
 arq_pool = None
@@ -26,6 +27,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+
+app.include_router(webhooks_router)
 
 @app.get("/health")
 async def health_check():

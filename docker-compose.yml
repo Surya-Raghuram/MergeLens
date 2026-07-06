@@ -13,7 +13,8 @@ services:
 
   api:
     build: 
-      context: ./backend
+      context: .                          # <-- Changed to root
+      dockerfile: ./backend/Dockerfile    # <-- Point to the Dockerfile
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
@@ -26,11 +27,12 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./backend/app:/app/app
+      - ./backend/app:/app/backend/app    # <-- Adjusted volume mapping
 
   worker:
     build: 
-      context: ./backend
+      context: .                          # <-- Changed to root
+      dockerfile: ./backend/Dockerfile    # <-- Point to the Dockerfile
     command: arq app.worker.tasks.WorkerSettings
     environment:
       - REDIS_HOST=redis
@@ -41,4 +43,4 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./backend/app:/app/app
+      - ./backend/app:/app/backend/app    # <-- Adjusted volume mapping
