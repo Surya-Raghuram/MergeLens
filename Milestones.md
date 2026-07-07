@@ -6,6 +6,6 @@
 
 [x] **Milestone 4**: The LangGraph Brain. Implement the agent state, the routing logic (detecting languages), the specific reviewers, and the verification step.
 
-[ ] **Milestone 5**: The GitHub Publisher. Authenticate as a GitHub App installation, map agent feedback to specific code lines, and publish inline review comments.
+[x] **Milestone 5**: The GitHub Publisher. Authenticate as a GitHub App installation, map agent feedback to specific code lines, and publish inline review comments.
 
-[ ] **Milestone 6**: The Flutter Dashboard. Build the frontend with Supabase Auth, connect it to the database for real-time logs, and create the configuration UI.
+[x] **Milestone 6**: The Flutter Dashboard. Build the frontend with Supabase Auth, connect it to the database for real-time logs, and create the configuration UI.
