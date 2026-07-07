@@ -1,21 +1,38 @@
 FROM python:3.11-slim
 
-WORKDIR /workspace
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies
+WORKDIR /app
+
+# Install system dependencies for C++ and Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    cmake \
+    git \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# 1. Build the C++ Analyzer
+COPY ./analyzer /app/analyzer
+WORKDIR /app/analyzer
+RUN mkdir build && cd build && \
+    cmake .. && \
+    make -j$(nproc)
 
-# Copy application layer
-COPY ./app /workspace/app
-COPY ./entrypoint.sh /workspace/entrypoint.sh
+# 2. Setup Python Backend
+WORKDIR /app/backend
+COPY ./backend/pyproject.toml .
+RUN pip install --no-cache-dir .
+
+# Copy application code and entrypoint
+COPY ./backend/app /app/backend/app
+COPY ./backend/entrypoint.sh /app/backend/entrypoint.sh
+
+# Ensure the script is executable
+RUN chmod +x /app/backend/entrypoint.sh
 
 EXPOSE 8000
 
-ENTRYPOINT ["/workspace/entrypoint.sh"]
+# Execute our dual-process script
+ENTRYPOINT ["/app/backend/entrypoint.sh"]
