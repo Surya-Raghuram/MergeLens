@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     # Startup: Create the Redis connection pool for enqueuing jobs
     global arq_pool
     arq_pool = await create_pool(
-        RedisSettings(host=settings.redis_host, port=settings.redis_port)
+        RedisSettings.from_dsn(settings.redis_url) # <-- UPDATED LINE
     )
     yield
     # Shutdown: Close the Redis pool

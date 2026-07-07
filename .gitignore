@@ -74,7 +74,7 @@ frontend/.flutter-plugins-dependencies
 frontend/.packages
 frontend/.metadata
 frontend/build/
-
+web/
 frontend/web/flutter_bootstrap.js
 frontend/web/flutter_service_worker.js
 frontend/web/main.dart.js

@@ -81,7 +81,4 @@ async def process_pull_request(ctx: dict, pr_number: int, repo_name: str) -> str
 
 class WorkerSettings:
     functions = [process_pull_request]
-    redis_settings = RedisSettings(
-        host=settings.redis_host, 
-        port=settings.redis_port
-    )
+    redis_settings = RedisSettings.from_dsn(settings.redis_url) # <-- UPDATED LINE
