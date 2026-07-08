@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/services/supabase_service.dart';
 import 'package:frontend/models/review_report.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Required for Logout
+import 'package:frontend/screens/login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,6 +17,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final SupabaseService _supabaseService = SupabaseService();
   ReviewReport? _selectedReport;
 
+  // Handles launching the GitHub App Installation page
+  Future<void> _launchGitHubAppInstall() async {
+    // This routes to the public installation page, not the developer settings
+    final Uri url = Uri.parse('https://github.com/apps/mergelens-studio/installations/new');
+    
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open GitHub. Check your App URL.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,10 +38,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E293B), // Slate 800
         title: Text(
-          '🔍 MergeLens // Engineering Control Center',
+          '🔍 MergeLens Studio',
           style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         elevation: 0,
+        actions: [
+          // The One-Click Connect Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: ElevatedButton.icon(
+              onPressed: _launchGitHubAppInstall,
+              icon: const Icon(Icons.add_link, color: Colors.white, size: 18),
+              label: Text(
+                'Connect Repositories',
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurpleAccent,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          // Secure Logout Button
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white54),
+            onPressed: () async {
+              // 1. Sign out of Supabase
+              await Supabase.instance.client.auth.signOut();
+              
+              // 2. Hard-route back to the Login Screen to clear the URL state
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+            tooltip: 'Logout',
+          ),
+          const SizedBox(width: 8), // Padding on the far right
+        ],
       ),
       body: StreamBuilder<List<ReviewReport>>(
         stream: _supabaseService.streamReviewReports(),

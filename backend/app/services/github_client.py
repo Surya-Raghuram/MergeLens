@@ -1,25 +1,29 @@
 from github import Github, Auth, GithubException
 from app.core.config import settings
 
+from github import Github, Auth, GithubException
+from app.core.config import settings
+
 def get_github_client(repo_name: str) -> Github:
     """
     Dynamically generates a 1-hour Installation Access Token for the requested repository.
     """
-    # 1. Clean the private key (Cloud providers often escape newlines as \\n)
     private_key = settings.github_private_key.replace('\\n', '\n')
     
-    # 2. Authenticate as the base GitHub App using our private .pem key
+    # 1. Authenticate as the base GitHub App
     app_auth = Auth.AppAuth(settings.github_app_id, private_key)
     app_client = Github(auth=app_auth)
     
-    # 3. Ask GitHub for the specific installation ID for this repository
+    # 2. Get the specific installation ID for this repository
     installation = app_client.get_repo(repo_name).get_installation()
     
-    # 4. Generate a temporary token scoped STRICTLY to this single repository
-    inst_auth = app_auth.get_installation_auth(installation.id)
+    # 3. Create the Installation Auth object (THIS IS THE FIXED LINE)
+    inst_auth = Auth.AppInstallationAuth(app_auth, installation.id)
     
-    # 5. Return the client authenticated as the installation
+    # 4. Return the client authenticated as the installation bot
     return Github(auth=inst_auth)
+
+# ... (Keep the rest of the file exactly as it was)
 
 def get_pull_request_files(repo_name: str, pr_number: int) -> list[dict]:
     """Fetches changed files, their diff patches, and raw file content."""
