@@ -1,16 +1,6 @@
 from github import Github, Auth, GithubException
 from app.core.config import settings
 
-from github import Github, Auth, GithubException
-from app.core.config import settings
-
-import re # <-- NEW: Required for the bulletproof string cleaner
-from github import Github, Auth, GithubException
-from app.core.config import settings
-
-from github import Github, Auth, GithubException
-from app.core.config import settings
-
 def get_github_client(repo_name: str) -> Github:
     """
     Dynamically generates a 1-hour Installation Access Token for the requested repository.
