@@ -4,27 +4,40 @@ from app.core.config import settings
 from github import Github, Auth, GithubException
 from app.core.config import settings
 
+import re # <-- NEW: Required for the bulletproof string cleaner
+from github import Github, Auth, GithubException
+from app.core.config import settings
+
 def get_github_client(repo_name: str) -> Github:
     """
     Dynamically generates a 1-hour Installation Access Token for the requested repository.
     """
-    # Force fix any mangled newlines from the cloud environment variable
-    private_key = settings.github_private_key.replace("\\n", "\n").replace("-----BEGIN RSA PRIVATE KEY-----", "-----BEGIN RSA PRIVATE KEY-----\n").replace("-----END RSA PRIVATE KEY-----", "\n-----END RSA PRIVATE KEY-----")
+    raw_key = settings.github_private_key
     
-    # 1. Authenticate as the base GitHub App
+    # --- BULLETPROOF PEM RECONSTRUCTOR ---
+    # 1. Strip the header and footer temporarily
+    core_key = re.sub(r'-----BEGIN RSA PRIVATE KEY-----', '', raw_key)
+    core_key = re.sub(r'-----END RSA PRIVATE KEY-----', '', core_key)
+    
+    # 2. Remove absolutely all whitespace, literal '\n' text, and hidden characters
+    core_key = re.sub(r'\s+|\\n', '', core_key)
+    
+    # 3. Rebuild the key with perfect, strict PEM formatting
+    private_key = f"-----BEGIN RSA PRIVATE KEY-----\n{core_key}\n-----END RSA PRIVATE KEY-----"
+    # -------------------------------------
+    
+    # Authenticate as the base GitHub App
     app_auth = Auth.AppAuth(settings.github_app_id, private_key)
     app_client = Github(auth=app_auth)
     
-    # 2. Get the specific installation ID for this repository
+    # Get the specific installation ID for this repository
     installation = app_client.get_repo(repo_name).get_installation()
     
-    # 3. Create the Installation Auth object (THIS IS THE FIXED LINE)
+    # Create the Installation Auth object
     inst_auth = Auth.AppInstallationAuth(app_auth, installation.id)
     
-    # 4. Return the client authenticated as the installation bot
+    # Return the client authenticated as the installation bot
     return Github(auth=inst_auth)
-
-# ... (Keep the rest of the file exactly as it was)
 
 def get_pull_request_files(repo_name: str, pr_number: int) -> list[dict]:
     """Fetches changed files, their diff patches, and raw file content."""
