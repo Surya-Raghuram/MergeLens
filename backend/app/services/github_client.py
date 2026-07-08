@@ -8,35 +8,31 @@ import re # <-- NEW: Required for the bulletproof string cleaner
 from github import Github, Auth, GithubException
 from app.core.config import settings
 
+from github import Github, Auth, GithubException
+from app.core.config import settings
+
 def get_github_client(repo_name: str) -> Github:
     """
     Dynamically generates a 1-hour Installation Access Token for the requested repository.
     """
-    raw_key = settings.github_private_key
+    # 1. Grab the key exactly as Render provides it
+    private_key = settings.github_private_key
     
-    # --- BULLETPROOF PEM RECONSTRUCTOR ---
-    # 1. Strip the header and footer temporarily
-    core_key = re.sub(r'-----BEGIN RSA PRIVATE KEY-----', '', raw_key)
-    core_key = re.sub(r'-----END RSA PRIVATE KEY-----', '', core_key)
-    
-    # 2. Remove absolutely all whitespace, literal '\n' text, and hidden characters
-    core_key = re.sub(r'\s+|\\n', '', core_key)
-    
-    # 3. Rebuild the key with perfect, strict PEM formatting
-    private_key = f"-----BEGIN RSA PRIVATE KEY-----\n{core_key}\n-----END RSA PRIVATE KEY-----"
-    # -------------------------------------
-    
-    # Authenticate as the base GitHub App
+    # 2. Safety check: If Render escaped the newlines into literal text, convert them back
+    if "\\n" in private_key:
+        private_key = private_key.replace("\\n", "\n")
+        
+    # 3. Authenticate as the base GitHub App
     app_auth = Auth.AppAuth(settings.github_app_id, private_key)
     app_client = Github(auth=app_auth)
     
-    # Get the specific installation ID for this repository
+    # 4. Get the specific installation ID for this repository
     installation = app_client.get_repo(repo_name).get_installation()
     
-    # Create the Installation Auth object
+    # 5. Create the Installation Auth object
     inst_auth = Auth.AppInstallationAuth(app_auth, installation.id)
     
-    # Return the client authenticated as the installation bot
+    # 6. Return the client authenticated as the installation bot
     return Github(auth=inst_auth)
 
 def get_pull_request_files(repo_name: str, pr_number: int) -> list[dict]:
