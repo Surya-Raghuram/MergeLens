@@ -59,6 +59,8 @@ analyzer/lib/
 *.exe
 *.out
 
+test_auth.py
+
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
