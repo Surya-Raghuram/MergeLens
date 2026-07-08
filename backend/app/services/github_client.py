@@ -1,28 +1,32 @@
 from github import Github, Auth, GithubException
 from app.core.config import settings
 
+import base64
+from github import Github, Auth, GithubException
+from app.core.config import settings
+
 def get_github_client(repo_name: str) -> Github:
     """
     Dynamically generates a 1-hour Installation Access Token for the requested repository.
     """
-    # 1. Grab the key exactly as Render provides it
-    private_key = settings.github_private_key
-    
-    # 2. Safety check: If Render escaped the newlines into literal text, convert them back
-    if "\\n" in private_key:
-        private_key = private_key.replace("\\n", "\n")
+    # 1. Decode the Base64 string safely back into a pristine PEM format
+    try:
+        private_key = base64.b64decode(settings.github_private_key).decode("utf-8")
+    except Exception as e:
+        print(f"Base64 Decoding Failed: {e}")
+        raise ValueError("Invalid Base64 string in GITHUB_PRIVATE_KEY")
         
-    # 3. Authenticate as the base GitHub App
+    # 2. Authenticate as the base GitHub App
     app_auth = Auth.AppAuth(settings.github_app_id, private_key)
     app_client = Github(auth=app_auth)
     
-    # 4. Get the specific installation ID for this repository
+    # 3. Get the specific installation ID for this repository
     installation = app_client.get_repo(repo_name).get_installation()
     
-    # 5. Create the Installation Auth object
+    # 4. Create the Installation Auth object
     inst_auth = Auth.AppInstallationAuth(app_auth, installation.id)
     
-    # 6. Return the client authenticated as the installation bot
+    # 5. Return the client authenticated as the installation bot
     return Github(auth=inst_auth)
 
 def get_pull_request_files(repo_name: str, pr_number: int) -> list[dict]:
