@@ -90,9 +90,10 @@ def publish_review_comments(repo_name: str, pr_number: int, file_path: str, comm
             continue
             
         try:
+            # THE FIX IS HERE: Changed commit_id= to commit=
             pr.create_review_comment(
                 body=f"🤖 **MergeLens AI:**\n\n{body}",
-                commit_id=latest_commit,
+                commit=latest_commit, 
                 path=file_path,
                 line=line_num
             )
