@@ -8,7 +8,8 @@ def get_github_client(repo_name: str) -> Github:
     """
     Dynamically generates a 1-hour Installation Access Token for the requested repository.
     """
-    private_key = settings.github_private_key.replace('\\n', '\n')
+    # Force fix any mangled newlines from the cloud environment variable
+    private_key = settings.github_private_key.replace("\\n", "\n").replace("-----BEGIN RSA PRIVATE KEY-----", "-----BEGIN RSA PRIVATE KEY-----\n").replace("-----END RSA PRIVATE KEY-----", "\n-----END RSA PRIVATE KEY-----")
     
     # 1. Authenticate as the base GitHub App
     app_auth = Auth.AppAuth(settings.github_app_id, private_key)
