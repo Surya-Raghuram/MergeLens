@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/theme/theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,30 +13,17 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  @override
-  void initState() {
-    super.initState();
-    // Listen for auth state changes (e.g., when GitHub redirects back)
-    _supabase.auth.onAuthStateChange.listen((data) {
-      final AuthChangeEvent event = data.event;
-      if (event == AuthChangeEvent.signedIn) {
-        // User logged in successfully, push to dashboard!
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
-      }
-    });
-  }
-
   Future<void> _signInWithGitHub() async {
     try {
       await _supabase.auth.signInWithOAuth(
         OAuthProvider.github,
-        redirectTo: 'http://localhost:8080', // Update to your current local Flutter port!
+        redirectTo: Uri.base.origin,
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: $e', style: const TextStyle(color: Colors.white))),
+        SnackBar(
+            content: Text('Login failed: $e',
+                style: const TextStyle(color: Colors.white))),
       );
     }
   }
@@ -44,31 +31,85 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'MergeLens Studio',
-              style: GoogleFonts.jetBrainsMono(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Autonomous Code Review Architecture',
-              style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[400]),
-            ),
-            const SizedBox(height: 50),
-            ElevatedButton.icon(
-              onPressed: _signInWithGitHub,
-              icon: const Icon(Icons.code, color: Colors.black), // Placeholder for GH logo
-              label: const Text('Continue with GitHub', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.background,
+              Color(0xFF101114),
+              Color(0xFF0B0B0D),
+            ],
+          ),
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Container(
+              margin: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [AppColors.accentPurple, AppColors.accent],
+                      ),
+                    ),
+                    child: const Icon(Icons.auto_awesome_rounded,
+                        color: Colors.white),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'MergeLens Studio',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Autonomous code review for modern GitHub teams',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _signInWithGitHub,
+                      icon: const Icon(Icons.login_rounded),
+                      label: const Text('Continue with GitHub'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Secure OAuth login powered by Supabase',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
