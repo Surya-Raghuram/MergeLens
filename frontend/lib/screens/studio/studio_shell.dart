@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/models/review_report.dart';
+import 'package:frontend/screens/profile/profile_screen.dart';
 import 'package:frontend/screens/review/pr_review_detail_screen.dart';
 import 'package:frontend/screens/studio/dashboard_tab.dart';
 import 'package:frontend/screens/studio/pr_reviews_tab.dart';
@@ -48,6 +49,14 @@ class _StudioShellState extends State<StudioShell> {
     );
   }
 
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const ProfileScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool desktop = MediaQuery.sizeOf(context).width >= 1024;
@@ -90,6 +99,7 @@ class _StudioShellState extends State<StudioShell> {
                   section: _section,
                   onSelect: _openSection,
                   onLogout: widget.onLogout,
+                  onOpenProfile: _openProfile,
                   collapsed: false,
                   onToggle: () {},
                 ),
@@ -106,6 +116,7 @@ class _StudioShellState extends State<StudioShell> {
                     section: _section,
                     onSelect: _openSection,
                     onLogout: widget.onLogout,
+                    onOpenProfile: _openProfile,
                     collapsed: _sidebarCollapsed,
                     onToggle: () {
                       setState(() {
@@ -164,6 +175,7 @@ class _Sidebar extends StatelessWidget {
     required this.section,
     required this.onSelect,
     required this.onLogout,
+    required this.onOpenProfile,
     required this.collapsed,
     required this.onToggle,
   });
@@ -171,6 +183,7 @@ class _Sidebar extends StatelessWidget {
   final StudioSection section;
   final ValueChanged<StudioSection> onSelect;
   final VoidCallback onLogout;
+  final VoidCallback onOpenProfile;
   final bool collapsed;
   final VoidCallback onToggle;
 
@@ -293,40 +306,44 @@ class _Sidebar extends StatelessWidget {
             const Spacer(),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppColors.accent,
-                      child: Icon(Icons.person_rounded, size: 18, color: Colors.white),
-                    ),
-                    if (!collapsed) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'GitHub Connected',
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'App installed',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
+              child: InkWell(
+                onTap: onOpenProfile,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 18,
+                        backgroundColor: AppColors.accent,
+                        child: Icon(Icons.person_rounded, size: 18, color: Colors.white),
                       ),
+                      if (!collapsed) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'GitHub Connected',
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'App installed',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

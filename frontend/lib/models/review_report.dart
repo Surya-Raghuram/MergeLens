@@ -86,19 +86,35 @@ class ReviewInlineComment {
   final String filePath;
   final int line;
   final String comment;
+  final String severity;
+  final String title;
 
   ReviewInlineComment({
     required this.filePath,
     required this.line,
     required this.comment,
+    this.severity = 'info',
+    this.title = 'Review note',
   });
 
   factory ReviewInlineComment.fromJson(dynamic json) {
     if (json is Map<String, dynamic>) {
+      final String normalizedSeverity = (json['severity'] ?? json['level'] ?? 'info')
+          .toString()
+          .toLowerCase();
+      final String normalizedComment =
+          json['comment']?.toString() ?? json['body']?.toString() ?? '';
+
       return ReviewInlineComment(
         filePath: json['file_path'] ?? json['path'] ?? 'Unknown file',
-        line: json['line'] ?? 0,
-        comment: json['comment'] ?? json['body'] ?? '',
+        line: json['line'] is int
+            ? json['line'] as int
+            : int.tryParse('${json['line']}') ?? 0,
+        comment: normalizedComment,
+        severity: normalizedSeverity,
+        title: json['title']?.toString() ??
+            json['summary']?.toString() ??
+            'Review note',
       );
     }
 

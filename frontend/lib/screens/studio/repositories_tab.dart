@@ -86,49 +86,76 @@ class _RepositoriesTabState extends State<RepositoriesTab> {
                     crossAxisCount: columns,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 2.8,
+                    childAspectRatio: 1.8,
                   ),
                   itemBuilder: (context, index) {
                     final repoName = repoNames[index];
                     final enabled = _enabledByRepo[repoName] ?? true;
                     final language = _guessLanguage(repoName, widget.reports);
+                    final counts = widget.reports
+                        .where((report) => report.repoName == repoName)
+                        .length;
 
                     return Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                          color: AppColors.surfaceAlt,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border)),
-                      child: Row(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.folder_rounded,
-                              color: AppColors.accent),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(repoName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        Theme.of(context).textTheme.bodyLarge),
-                                const SizedBox(height: 2),
-                                Text(language,
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium),
-                              ],
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceAlt,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: const Icon(
+                                  Icons.folder_rounded,
+                                  color: AppColors.accent,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  repoName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                            ],
                           ),
-                          Switch.adaptive(
-                            value: enabled,
-                            activeColor: AppColors.accent,
-                            onChanged: (value) {
-                              setState(() {
-                                _enabledByRepo[repoName] = value;
-                              });
-                            },
+                          const SizedBox(height: 14),
+                          Text(
+                            language,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              _StatusChip(
+                                label: '$counts PRs',
+                                color: AppColors.accent,
+                              ),
+                              const Spacer(),
+                              Switch.adaptive(
+                                value: enabled,
+                                activeColor: AppColors.accent,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _enabledByRepo[repoName] = value;
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -161,6 +188,31 @@ class _RepositoriesTabState extends State<RepositoriesTab> {
   }
 }
 
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.onConnectRepository});
 
@@ -173,7 +225,7 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.border)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

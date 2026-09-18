@@ -24,8 +24,25 @@ class DashboardTab extends StatelessWidget {
         reports.where((r) => r.status.toLowerCase() == 'processing').length;
     final int failed =
         reports.where((r) => r.status.toLowerCase() == 'failed').length;
+    final int clean = reports
+        .where((r) => r.status.toLowerCase() == 'clean')
+        .length;
     final int bugsCaught = reports.fold<int>(
         0, (sum, report) => sum + report.structuralComments.length);
+
+    final repoGroups = <String, int>{};
+    for (final report in reports) {
+      repoGroups[report.repoName] = (repoGroups[report.repoName] ?? 0) + 1;
+    }
+
+    final healthRows = repoGroups.entries.take(4).map((entry) {
+      final status = entry.value > 0 ? 'Healthy' : 'Queued';
+      return _RepoHealthRow(
+        repoName: entry.key,
+        prCount: entry.value,
+        status: status,
+      );
+    }).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -57,10 +74,10 @@ class DashboardTab extends StatelessWidget {
           const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
-              final bool compact = constraints.maxWidth < 880;
+              final bool compact = constraints.maxWidth < 900;
               final cards = [
                 _MetricCard(
-                    title: 'Total PRs Reviewed',
+                    title: 'PRs Reviewed',
                     value: reports.length.toString(),
                     icon: Icons.merge_type_rounded),
                 _MetricCard(
@@ -68,22 +85,23 @@ class DashboardTab extends StatelessWidget {
                     value: bugsCaught.toString(),
                     icon: Icons.bug_report_rounded),
                 _MetricCard(
-                    title: 'In Progress',
+                    title: 'Agent Reviewing',
                     value: processing.toString(),
                     icon: Icons.autorenew_rounded),
                 _MetricCard(
-                    title: 'Failed Runs',
-                    value: failed.toString(),
-                    icon: Icons.error_outline_rounded),
+                    title: 'Passed',
+                    value: clean.toString(),
+                    icon: Icons.check_circle_rounded),
               ];
 
               if (compact) {
-                return Column(
-                    children: cards
-                        .map((card) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: card))
-                        .toList());
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: cards
+                      .map((card) => SizedBox(width: 220, child: card))
+                      .toList(),
+                );
               }
 
               return Row(
@@ -105,54 +123,147 @@ class DashboardTab extends StatelessWidget {
             },
           ),
           const SizedBox(height: 20),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text('Activity Feed',
-                          style: Theme.of(context).textTheme.titleLarge),
-                      const Spacer(),
-                      _StatusChip(
-                          label: 'Completed: $completed',
-                          color: AppColors.success),
-                      const SizedBox(width: 8),
-                      _StatusChip(
-                          label: 'Processing: $processing',
-                          color: AppColors.warning),
-                    ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final bool wide = constraints.maxWidth >= 960;
+              final content = [
+                _DashboardPanel(
+                  title: 'Repository Health',
+                  child: Column(
+                    children: healthRows.isEmpty
+                        ? [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: const Text(
+                                'No repositories connected yet. Connect a repo to begin checking health.',
+                              ),
+                            )
+                          ]
+                        : healthRows,
                   ),
-                  const SizedBox(height: 14),
-                  if (reports.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                          color: AppColors.surfaceAlt,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border)),
-                      child: const Text(
-                          'No review activity yet. Connect repositories to begin.'),
-                    )
-                  else
-                    ...reports.take(12).map((report) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _ActivityTile(
-                          report: report,
-                          onTap: () => onOpenReviewTab(report),
-                          onDetailTap: () => onOpenDetail(report),
+                ),
+                _DashboardPanel(
+                  title: 'Recent PR Activity',
+                  child: reports.isEmpty
+                      ? Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceAlt,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: const Text(
+                            'No review activity yet. Connect repositories to begin.',
+                          ),
+                        )
+                      : Column(
+                          children: reports.take(5).map((report) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _ActivityTile(
+                                report: report,
+                                onTap: () => onOpenReviewTab(report),
+                                onDetailTap: () => onOpenDetail(report),
+                              ),
+                            );
+                          }).toList(),
                         ),
-                      );
-                    }),
+                ),
+              ];
+
+              if (wide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: content[0]),
+                    const SizedBox(width: 16),
+                    Expanded(child: content[1]),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  content[0],
+                  const SizedBox(height: 16),
+                  content[1],
                 ],
-              ),
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          _DashboardPanel(
+            title: 'Activity Feed',
+            child: Column(
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _StatusChip(label: 'Passed: $completed', color: AppColors.success),
+                    _StatusChip(label: 'Failed: $failed', color: AppColors.error),
+                    _StatusChip(label: 'Agent Reviewing: $processing', color: AppColors.warning),
+                    _StatusChip(label: 'Bugs Found: $bugsCaught', color: AppColors.error),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (reports.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Text('No review activity yet. Connect repositories to begin.'),
+                  )
+                else
+                  ...reports.take(8).map((report) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _ActivityTile(
+                        report: report,
+                        onTap: () => onOpenReviewTab(report),
+                        onDetailTap: () => onOpenDetail(report),
+                      ),
+                    );
+                  }),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DashboardPanel extends StatelessWidget {
+  const _DashboardPanel({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 12),
+            child,
+          ],
+        ),
       ),
     );
   }
@@ -182,7 +293,7 @@ class _MetricCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                       overflow: TextOverflow.ellipsis))
             ]),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(value,
                 style: GoogleFonts.jetBrainsMono(
                     fontSize: 28,
@@ -190,6 +301,65 @@ class _MetricCard extends StatelessWidget {
                     color: AppColors.textPrimary)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RepoHealthRow extends StatelessWidget {
+  const _RepoHealthRow({
+    required this.repoName,
+    required this.prCount,
+    required this.status,
+  });
+
+  final String repoName;
+  final int prCount;
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color healthColor = status.toLowerCase() == 'healthy'
+        ? AppColors.success
+        : AppColors.warning;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: healthColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  repoName,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$prCount recent PRs',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+          _StatusChip(label: status, color: healthColor),
+        ],
       ),
     );
   }
@@ -219,30 +389,48 @@ class _ActivityTile extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
-            color: AppColors.surface),
-        child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          title: Text('${report.repoName}  #${report.prNumber}',
-              style: Theme.of(context).textTheme.bodyLarge),
-          subtitle: Text('Tap to open PR Reviews',
-              style: Theme.of(context).textTheme.bodyMedium),
-          trailing: Wrap(
-            spacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _StatusChip(label: _statusLabel(status), color: statusColor),
-              OutlinedButton(
-                onPressed: onDetailTap,
-                child: const Text('Open'),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+          color: AppColors.surfaceAlt,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${report.repoName}  #${report.prNumber}',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    report.fileChangesSummary,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _StatusChip(label: _statusLabel(status), color: statusColor),
+                OutlinedButton(
+                  onPressed: onDetailTap,
+                  child: const Text('Open'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -251,11 +439,13 @@ class _ActivityTile extends StatelessWidget {
   String _statusLabel(String status) {
     switch (status) {
       case 'completed':
-        return 'Review Completed';
+        return 'Passed';
       case 'processing':
-        return 'Processing';
+        return 'Agent Reviewing';
       case 'failed':
-        return 'Failed';
+        return 'Bugs Found';
+      case 'clean':
+        return 'Passed';
       default:
         return 'Queued';
     }
@@ -271,16 +461,20 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: color.withOpacity(0.45))),
-      child: Text(label,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: color, fontWeight: FontWeight.w600)),
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
     );
   }
 }

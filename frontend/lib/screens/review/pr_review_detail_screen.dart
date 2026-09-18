@@ -27,9 +27,25 @@ class PRReviewDetailScreen extends StatelessWidget {
                     comment: item['comment']?.toString() ??
                         item['body']?.toString() ??
                         '',
+                    severity: (item['severity'] ?? item['level'] ?? 'info')
+                        .toString()
+                        .toLowerCase(),
+                    title: item['title']?.toString() ??
+                        item['summary']?.toString() ??
+                        'Review note',
                   ),
                 )
                 .toList();
+
+    final issueList = inlineComments.asMap().entries.map((entry) {
+      final item = entry.value;
+      return _ReviewIssue(
+        filePath: item.filePath,
+        line: item.line,
+        severity: _severityLabel(item.severity),
+        description: item.comment,
+      );
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -60,7 +76,7 @@ class PRReviewDetailScreen extends StatelessWidget {
                   _FilesCard(report: report),
                 ],
                 const SizedBox(height: 16),
-                _InlineCommentsCard(comments: inlineComments),
+                _IssueListCard(issues: issueList),
               ],
             ),
           );
@@ -69,6 +85,14 @@ class PRReviewDetailScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String _severityLabel(String severity) {
+    final value = severity.toLowerCase();
+    if (value.contains('high') || value == 'error') return 'High';
+    if (value.contains('medium') || value == 'warning') return 'Medium';
+    if (value.contains('low') || value == 'info') return 'Low';
+    return 'Info';
   }
 }
 
@@ -143,13 +167,13 @@ class _SummaryCard extends StatelessWidget {
       blockquotePadding: const EdgeInsets.all(14),
       codeblockPadding: const EdgeInsets.all(14),
       codeblockDecoration: BoxDecoration(
-        color: const Color(0xFF101214),
+        color: AppColors.surfaceAlt,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
       code: GoogleFonts.jetBrainsMono(
         fontSize: 13,
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.textPrimary,
         backgroundColor: const Color(0x00000000),
       ),
       blockSpacing: 14,
@@ -168,7 +192,7 @@ class _SummaryCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'Architectural Summary',
+                  'What this PR is doing',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const Spacer(),
@@ -272,10 +296,10 @@ class _FilesCard extends StatelessWidget {
   }
 }
 
-class _InlineCommentsCard extends StatelessWidget {
-  const _InlineCommentsCard({required this.comments});
+class _IssueListCard extends StatelessWidget {
+  const _IssueListCard({required this.issues});
 
-  final List<ReviewInlineComment> comments;
+  final List<_ReviewIssue> issues;
 
   @override
   Widget build(BuildContext context) {
@@ -286,11 +310,11 @@ class _InlineCommentsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Inline Comments',
+              'Bugs & Review',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            if (comments.isEmpty)
+            if (issues.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -300,65 +324,66 @@ class _InlineCommentsCard extends StatelessWidget {
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Text(
-                  'No inline comments were captured for this review.',
+                  'No bugs or review notes were captured for this PR.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               )
             else
               Column(
-                children: comments.map((comment) {
+                children: issues.map((issue) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: Row(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                  color: AppColors.accent.withOpacity(0.35)),
-                            ),
-                            child: Text(
-                              '${comment.line}',
-                              style: GoogleFonts.jetBrainsMono(
-                                fontSize: 12,
-                                color: AppColors.accent,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  comment.filePath,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  issue.filePath,
                                   style: Theme.of(context).textTheme.bodyLarge,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  comment.comment,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        height: 1.45,
-                                        color: AppColors.textPrimary,
-                                      ),
+                              ),
+                              _SeverityChip(label: issue.severity),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
                                 ),
-                              ],
-                            ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Text(
+                                  'Line ${issue.line}',
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 12,
+                                    color: AppColors.accent,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  issue.description,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -367,6 +392,53 @@ class _InlineCommentsCard extends StatelessWidget {
                 }).toList(),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReviewIssue {
+  const _ReviewIssue({
+    required this.filePath,
+    required this.line,
+    required this.severity,
+    required this.description,
+  });
+
+  final String filePath;
+  final int line;
+  final String severity;
+  final String description;
+}
+
+class _SeverityChip extends StatelessWidget {
+  const _SeverityChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = switch (label.toLowerCase()) {
+      'high' => AppColors.error,
+      'medium' => AppColors.warning,
+      'low' => AppColors.success,
+      _ => AppColors.accent,
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
         ),
       ),
     );
@@ -382,7 +454,7 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final String normalized = status.toLowerCase();
     Color color = AppColors.textSecondary;
-    if (normalized == 'completed') {
+    if (normalized == 'completed' || normalized == 'clean') {
       color = AppColors.success;
     } else if (normalized == 'processing' || normalized == 'queued') {
       color = AppColors.warning;
